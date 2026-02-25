@@ -1,11 +1,14 @@
 #!/bin/bash
 
-# Configuration
-VM_COMPOSE_DIR="/Path/To/This/Repo"
-RDP_HOST="127.0.0.1"
-RDP_PORT="3389"
-WIN_USER="tt"
-WIN_PASS="1234"
+# Load configuration from .env in the repo root
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+set -a
+# shellcheck source=../.env
+source "$SCRIPT_DIR/../.env"
+set +a
+
+WIN_USER="$USERNAME"
+WIN_PASS="$PASSWORD"
 
 # Start the VM
 cd "$VM_COMPOSE_DIR" || exit 1
