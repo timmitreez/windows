@@ -14,6 +14,11 @@
 
 Windows inside a Docker container.
 
+## Local additions
+- For using the Fedora Shortcut:
+- Place the desktop/windows-vm-connect.desktop file in this repo in $HOME/.local/share/applications
+- Place desktop/windows-vm-connect.sh in this repo in $HOME/.local/bin folder and adjust the path to this repository.
+
 ## Features ✨
 
  - ISO downloader

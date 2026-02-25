@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Windows VM
+Comment=Start Windows VM and connect via RDP
+Exec=$HOME/.local/bin/windows-vm-connect.sh
+Icon=computer
+Terminal=false
+Categories=System;RemoteAccess;
+StartupNotify=true
