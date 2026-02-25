@@ -1,9 +1,14 @@
 services:
   windows:
     image: dockurr/windows
-    container_name: windows
+    container_name: fedora-windows
     environment:
       VERSION: "11"
+      RAM_SIZE: "$SELECTED_RAM"
+      CPU_CORES: "$SELECTED_CORES"
+      DISK_SIZE: "$SELECTED_DISK"
+      USERNAME: "$USERNAME"
+      PASSWORD: "$PASSWORD"
     devices:
       - /dev/kvm
       - /dev/net/tun
@@ -14,6 +19,7 @@ services:
       - 3389:3389/tcp
       - 3389:3389/udp
     volumes:
-      - ./windows:/storage
+      - $HOME/.windows:/storage
+      - $HOME/Windows:/shared
     restart: always
     stop_grace_period: 2m
