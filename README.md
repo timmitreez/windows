@@ -15,9 +15,25 @@
 Windows inside a Docker container.
 
 ## Local additions
-- For using the Fedora Shortcut:
-- Place the desktop/windows-vm-connect.desktop file in this repo in $HOME/.local/share/applications
-- Place desktop/windows-vm-connect.sh in this repo in $HOME/.local/bin folder and adjust the path to this repository.
+
+To add a desktop shortcut on Fedora/GNOME:
+
+1. Copy the script to your local bin:
+
+   ```bash
+   cp desktop/windows-vm-connect.sh ~/.local/bin/
+   chmod +x ~/.local/bin/windows-vm-connect.sh
+   ```
+
+2. Edit `desktop/windows-vm-connect.desktop` and replace the `Exec` path with your absolute home directory path.
+   **Note:** `.desktop` files do not expand `$HOME` — you must use the full path (e.g. `/home/youruser/...`).
+
+3. Copy the `.desktop` file to your applications folder:
+
+   ```bash
+   cp desktop/windows-vm-connect.desktop ~/.local/share/applications/
+   update-desktop-database ~/.local/share/applications
+   ```
 
 ## Features ✨
 
