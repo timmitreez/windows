@@ -11,6 +11,71 @@ notify() {
     notify-send -i computer "Windows VM" "$1" 2>/dev/null
 }
 
+# Determine xfreerdp display arguments based on connected monitors.
+#
+# Configurable via RDP_MONITOR env var (set in .env):
+#   auto     — (default) laptop monitor when multi-monitor, workarea when single
+#   workarea — always use borderless workarea mode (original behavior)
+#   <number> — fullscreen on that xfreerdp monitor ID (see: xfreerdp /list:monitor)
+get_display_args() {
+    local rdp_monitor="${RDP_MONITOR:-auto}"
+
+    # Explicit workarea override — skip detection entirely
+    if [ "$rdp_monitor" = "workarea" ]; then
+        echo "+workarea -decorations"
+        return
+    fi
+
+    # Explicit monitor ID — fullscreen on that monitor
+    if [[ "$rdp_monitor" =~ ^[0-9]+$ ]]; then
+        echo "/f /monitors:${rdp_monitor}"
+        return
+    fi
+
+    # Auto mode: detect monitors
+    local monitor_list
+    monitor_list=$(xfreerdp /list:monitor 2>/dev/null)
+    local monitor_count
+    monitor_count=$(echo "$monitor_list" | grep -cP '^\s*[\*\s]*\[\d+\]')
+
+    if [ "$monitor_count" -le 1 ]; then
+        echo "+workarea -decorations"
+        return
+    fi
+
+    # Multiple monitors — find the laptop (eDP) screen
+    local laptop_res
+    laptop_res=$(xrandr --listmonitors 2>/dev/null \
+        | grep -i 'eDP' \
+        | grep -oP '\d+(?=/\d+x)' | head -1)
+    local laptop_height
+    laptop_height=$(xrandr --listmonitors 2>/dev/null \
+        | grep -i 'eDP' \
+        | grep -oP '(?<=x)\d+(?=/)')
+
+    local target_id=""
+    if [ -n "$laptop_res" ] && [ -n "$laptop_height" ]; then
+        local match_res="${laptop_res}x${laptop_height}"
+        target_id=$(echo "$monitor_list" \
+            | grep -P "\[\d+\]\s+${match_res}\b" \
+            | grep -oP '\[\K\d+' | head -1)
+    fi
+
+    # Fallback: primary monitor (marked with *)
+    if [ -z "$target_id" ]; then
+        target_id=$(echo "$monitor_list" \
+            | grep '^\s*\*' \
+            | grep -oP '\[\K\d+' | head -1)
+    fi
+
+    # Final fallback: monitor 0
+    target_id="${target_id:-0}"
+
+    echo "/f /monitors:${target_id}"
+}
+
+DISPLAY_ARGS=$(get_display_args)
+
 # Start the VM
 cd "$VM_COMPOSE_DIR" || exit 1
 notify "Starting Windows VM..."
@@ -40,9 +105,10 @@ fi
 # xfreerdp exits non-zero when the connection fails, and 0 when the
 # user closes a successful session.
 RETRIES=0
-MAX_RETRIES=30
+MAX_RETRIES=6
 while [ "$RETRIES" -lt "$MAX_RETRIES" ]; do
-    xfreerdp /v:${RDP_HOST}:${RDP_PORT} /u:${USERNAME} /p:${PASSWORD} /cert:ignore +workarea -decorations -grab-keyboard
+    # shellcheck disable=SC2086
+    xfreerdp /v:${RDP_HOST}:${RDP_PORT} /u:${USERNAME} /p:${PASSWORD} /cert:ignore ${DISPLAY_ARGS} -grab-keyboard
     RC=$?
 
     if [ "$RC" -eq 0 ]; then
